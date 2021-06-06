@@ -55,10 +55,23 @@ def construir_diccionario_desplazamiento(desplazamiento):
     mensaje original y los valores son los valores encriptados de cada letra.
 
     :param desplazamiento: Numero entero para el desplazamiento.
-    :return: Diccionario, con claves para letras mayusculas y minusculas.
+    :return: Diccionario, con claves para mayusculas y minusculas.
     """
+    lista_letras = string.ascii_lowercase
+    diccionario_desplazamiento = {}
 
-    return {}
+    for indice in range(len(lista_letras)):
+        indice_desplazado = indice + desplazamiento
+        if indice_desplazado < len(lista_letras):
+            letra_desplazada = lista_letras[indice_desplazado]
+        else:
+            letra_desplazada = lista_letras[indice_desplazado - len(lista_letras)]
+
+        letra_original = lista_letras[indice]
+        diccionario_desplazamiento[letra_original] = letra_desplazada
+        diccionario_desplazamiento[letra_original.upper()] = letra_desplazada.upper()
+
+    return diccionario_desplazamiento
 
 
 def aplicar_diccionario_encriptado(texto_mensaje, diccionario_encriptado):
@@ -69,7 +82,14 @@ def aplicar_diccionario_encriptado(texto_mensaje, diccionario_encriptado):
     original es y los valores las letras encriptadas.
     :return: La cadena texto_mensaje encriptada.
     """
-    return ""
+    mensaje_encriptado = ""
+    for letra in texto_mensaje:
+        if letra in diccionario_encriptado.keys():
+            mensaje_encriptado += diccionario_encriptado[letra]
+        else:
+            mensaje_encriptado += letra
+
+    return mensaje_encriptado
 
 
 class CodificadorPorDesplazamiento(object):
@@ -80,31 +100,35 @@ class CodificadorPorDesplazamiento(object):
         :param texto_mensaje: Cadena de caracteres, con el mensaje a encriptar.
         :param desplazamiento: Entero. El desplazamiento para el cifrado Cesar.
         """
-        pass
+        self.texto_mensaje = texto_mensaje
+        self.desplazamiento = desplazamiento
+        self.diccionario_desplazamiento = {}
+        self.mensaje_encriptado = ""
+        self.cambiar_desplazamiento(desplazamiento)
 
     def get_desplazamiento(self):
         """
         :return: Entero. El valor del campo desplazamiento
         """
-        return 0
+        return self.desplazamiento
 
     def get_diccionario_desplazamiento(self):
         """
         :return: Diccionario. Una copia del campo diccionario_desplazamiento.
         """
-        return {}
+        return dict(self.diccionario_desplazamiento)
 
     def get_texto_mensaje(self):
         """
         :return: Cadena de caracteres. El valor del campo texto_mensaje.
         """
-        return ""
+        return self.texto_mensaje
 
     def get_mensaje_encriptado(self):
         """
         :return: Cadena de caracteres. El valor del campo mensaje_encriptado.
         """
-        return ""
+        return self.mensaje_encriptado
 
     def cambiar_desplazamiento(self, nuevo_desplazamiento):
         """
@@ -112,16 +136,19 @@ class CodificadorPorDesplazamiento(object):
         :param nuevo_desplazamiento: Nuevo valor del desplazamiento.
         :return: None
         """
-        pass
+        self.desplazamiento = nuevo_desplazamiento
+        self.diccionario_desplazamiento = construir_diccionario_desplazamiento(nuevo_desplazamiento)
+        self.mensaje_encriptado = aplicar_diccionario_encriptado(self.texto_mensaje, self.diccionario_desplazamiento)
 
 
 class DecodificadorPorDesplazamiento(object):
 
     def __init__(self, mensaje_encriptado):
         """
-        :param mensaje_encriptado: Cadena de caracteres, con el mensaje a desencriptar.
+        :param mensaje_encriptado: El mensaje a desencriptar.
         """
-        pass
+        self.mensaje_encriptado = mensaje_encriptado
+        self.diccionario = cargar_diccionario("diccionario.txt")
 
     def descifrar_mensaje(self):
         """
@@ -133,16 +160,38 @@ class DecodificadorPorDesplazamiento(object):
         :return: Tupla. El primer elemento es el mejor desplazamiento encontrado, y el segundo elemento es el mensaje
         desencriptado.
         """
+        desplazamiento = None
+        palabras_en_diccionario = None
+        mensaje_descifrado = self.mensaje_encriptado
 
-        return 0, ""
+        for candidato_desplazamiento in range(26):
+            desplazamiento_descifrado = 26 - candidato_desplazamiento
+            diccionario_encriptado = construir_diccionario_desplazamiento(desplazamiento_descifrado)
+            candidato_descifrado = aplicar_diccionario_encriptado(self.mensaje_encriptado, diccionario_encriptado)
+
+            palabras_candidato = candidato_descifrado.split()
+            palabras_diccionario_candidato = 0
+            for palabra in palabras_candidato:
+                if esta_en_diccionario(self.diccionario, palabra):
+                    palabras_diccionario_candidato += 1
+
+            if desplazamiento is None or palabras_diccionario_candidato > palabras_en_diccionario:
+                desplazamiento = candidato_desplazamiento
+                palabras_en_diccionario = palabras_diccionario_candidato
+                mensaje_descifrado = candidato_descifrado
+
+        return desplazamiento, mensaje_descifrado
 
     def get_diccionario(self):
         """
         :return: Una copia del campo diccionario.
         """
-        return []
+        return list(self.diccionario)
 
 
 if __name__ == "__main__":
-    mensaje_en_clave = DecodificadorPorDesplazamiento(obtener_mensaje_confidencial())
-    print(mensaje_en_clave.descifrar_mensaje())
+    # mensaje_en_clave = DecodificadorPorDesplazamiento(obtener_mensaje_confidencial())
+    # print(mensaje_en_clave.descifrar_mensaje())
+
+    decodificador = DecodificadorPorDesplazamiento("Xkxc gn Rgtw!")
+    print(decodificador.descifrar_mensaje())  # En consola: (2, 'Viva el Peru!')

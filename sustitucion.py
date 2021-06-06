@@ -20,7 +20,19 @@ def construir_diccionario_sustitucion(permutacion_vocales):
     :return: Diccionario, con claves para letras mayusculas y minusculas.
     """
 
-    return {}
+    lista_letras = string.ascii_lowercase
+    diccionario_sustitucion = {}
+
+    for letra_original in lista_letras:
+        if letra_original in VOCALES_MINUSCULAS:
+            letra_sustituta = permutacion_vocales[VOCALES_MINUSCULAS.index(letra_original)]
+        else:
+            letra_sustituta = letra_original
+
+        diccionario_sustitucion[letra_original] = letra_sustituta
+        diccionario_sustitucion[letra_original.upper()] = letra_sustituta.upper()
+
+    return diccionario_sustitucion
 
 
 class CodificadorPorSustitucion(object):
@@ -31,26 +43,28 @@ class CodificadorPorSustitucion(object):
         :param texto_mensaje: Cadena de caracteres, con el mensaje a encriptar.
         :param permutacion_vocales: Cadena de caracteres, con la permutacion de vocales para el cifrado por sustitucion.
         """
-        pass
+        self.texto_mensaje = texto_mensaje
+        self.diccionario_sustitucion = construir_diccionario_sustitucion(permutacion_vocales)
+        self.mensaje_encriptado = aplicar_diccionario_encriptado(self.texto_mensaje, self.diccionario_sustitucion)
 
     def get_diccionario_sustitucion(self):
         """
 
         :return: Diccionario. Una copia del campo diccionario_sustitucion.
         """
-        return {}
+        return dict(self.diccionario_sustitucion)
 
     def get_texto_mensaje(self):
         """
           :return: Cadena de caracteres. El valor del campo texto_mensaje.
           """
-        return ""
+        return self.texto_mensaje
 
     def get_mensaje_encriptado(self):
         """
         :return: Cadena de caracteres. El valor del campo mensaje_encriptado.
         """
-        return ""
+        return self.mensaje_encriptado
 
 
 class DecodificadorPorSustitucion(object):
@@ -59,7 +73,8 @@ class DecodificadorPorSustitucion(object):
         """
         :param mensaje_encriptado: Cadena de caracteres, con el mensaje a desencriptar.
         """
-        pass
+        self.mensaje_encriptado = mensaje_encriptado
+        self.diccionario = cargar_diccionario("diccionario.txt")
 
     def descifrar_mensaje(self):
         """
@@ -72,13 +87,37 @@ class DecodificadorPorSustitucion(object):
         :return: Una cadena de caracteres con el mensaje decodificado.
         """
 
-        return ""
+        palabras_en_diccionario = None
+        mensaje_descifrado = self.mensaje_encriptado
+
+        candidatos = obtener_permutaciones(VOCALES_MINUSCULAS)
+        for candidato_permutacion in candidatos:
+            candidato_descifrado = ""
+            for letra in self.mensaje_encriptado:
+                if letra in VOCALES_MINUSCULAS:
+                    candidato_descifrado += VOCALES_MINUSCULAS[candidato_permutacion.index(letra)]
+                elif letra in VOCALES_MAYUSCULAS:
+                    candidato_descifrado += VOCALES_MAYUSCULAS[candidato_permutacion.index(letra)]
+                else:
+                    candidato_descifrado += letra
+
+            palabras_candidato = candidato_descifrado.split()
+            palabras_diccionario_candidato = 0
+            for palabra in palabras_candidato:
+                if esta_en_diccionario(self.diccionario, palabra):
+                    palabras_diccionario_candidato += 1
+
+            if palabras_en_diccionario is None or palabras_diccionario_candidato > palabras_en_diccionario:
+                palabras_en_diccionario = palabras_diccionario_candidato
+                mensaje_descifrado = candidato_descifrado
+
+        return mensaje_descifrado
 
     def get_diccionario(self):
         """
         :return: Una copia del campo diccionario.
         """
-        return []
+        return list(self.diccionario)
 
 
 if __name__ == "__main__":
